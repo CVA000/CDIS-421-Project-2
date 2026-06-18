@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRANIAL TERMINAL v3.0 :: 12 Cranial Nerves</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #000000;
+            --glow: #00ff00;
+            --glow-dim: #00aa00;
+            --glow-faint: #004400;
+            --font-mono: 'Courier New', 'Consolas', 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+            --border-glow: 0 0 6px rgba(0,255,0,0.35);
+            --text-glow: 0 0 4px rgba(0,255,0,0.55);
+            --text-glow-strong: 0 0 8px rgba(0,255,0,0.75);
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            background: var(--bg);
+            color: var(--glow);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.5;
+            overflow: hidden;
+            text-shadow: var(--text-glow);
+            -webkit-font-smoothing: antialiased;
+        }
+
+body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            background: repeating-linear-gradient(0deg,
+                transparent, transparent 2px,
+                rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+        }
+
+.app-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+.header-bar {
+            flex-shrink: 0;
+            border-bottom: 2px solid var(--glow-dim);
+            box-shadow: 0 2px 12px rgba(0,255,0,0.12);
+            background: rgba(0,255,0,0.018);
+            padding: 7px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-title {
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(0,255,0,0.9);
+            font-weight: bold;
+            font-size: 12px;
+            letter-spacing: 3px;
+            white-space: nowrap;
+        }
+
+        .header-title span {
+            color: var(--glow);
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 24px;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            color: var(--glow-dim);
+            opacity: 0.75;
+        }
+
+        #headerClock { font-weight: bold; }
+
+.main-area {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            padding: 10px;
+            gap: 10px;
+        }
+
+.cn-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 14px 7px 10px;
+            border: 2px solid var(--glow-dim);
+            box-shadow: var(--border-glow), inset 0 0 20px rgba(0,255,0,0.04);
+            background: rgba(0,255,0,0.012);
+            flex-shrink: 0;
+            width: 96px;
+            position: relative;
+        }
+
+        .cn-panel::before {
+            content: 'NERVE SELECT';
+            position: absolute;
+            top: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg);
+            padding: 0 5px;
+            font-size: 7.5px;
+            letter-spacing: 2px;
+            color: var(--glow-dim);
+            white-space: nowrap;
+        }
+
+        .cn-btn {
+            all: unset;
+            display: block;
+            text-align: center;
+            padding: 7px 4px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            color: var(--glow);
+            text-shadow: var(--text-glow);
+            border: 1px solid var(--glow-faint);
+            background: rgba(0,255,0,0.03);
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+            user-select: none;
+        }
+
+        .cn-btn:hover {
+            background: rgba(0,255,0,0.09);
+            border-color: var(--glow);
+            box-shadow: 0 0 10px rgba(0,255,0,0.45), inset 0 0 8px rgba(0,255,0,0.1);
+            color: #fff;
+        }
+
+        .zoom-reset-btn {
+            margin-top: 8px;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            color: var(--glow-faint);
+            border-color: var(--glow-faint);
+            border-style: dashed;
+        }
+        .zoom-reset-btn:hover {
+            color: var(--glow-dim);
+            border-color: var(--glow-dim);
+            border-style: solid;
+            box-shadow: 0 0 8px rgba(0,255,0,0.25);
+            background: rgba(0,255,0,0.06);
+        }
+
+.content-split {
+            display: flex;
+            flex: 1;
+            min-width: 0;
+            gap: 10px;
+        }
+
+.viewport-panel {
+            flex: 1.15;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--glow-dim);
+            box-shadow: var(--border-glow), inset 0 0 30px rgba(0,255,0,0.03);
+            background: rgba(0,255,0,0.008);
+            position: relative;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .viewport-panel::before {
+            content: 'SYSTEM VIEWPORT';
+            position: absolute;
+            top: -9px;
+            left: 16px;
+            background: var(--bg);
+            padding: 0 8px;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--glow-dim);
+            z-index: 2;
+        }
+
+        .viewport-body {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #brainstemSvg {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .viewport-status {
+            border-top: 1px solid var(--glow-faint);
+            padding: 5px 12px;
+            font-size: 10px;
+            color: var(--glow-dim);
+            display: flex;
+            justify-content: space-between;
+            letter-spacing: 1px;
+        }
+
+.terminal-panel {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--glow-dim);
+            box-shadow: var(--border-glow), inset 0 0 30px rgba(0,255,0,0.03);
+            background: rgba(0,255,0,0.008);
+            position: relative;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .terminal-panel::before {
+            content: 'TERMINAL OUTPUT';
+            position: absolute;
+            top: -9px;
+            left: 16px;
+            background: var(--bg);
+            padding: 0 8px;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--glow-dim);
+            z-index: 2;
+        }
+
+        .terminal-body {
+            flex: 1;
+            padding: 14px 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .terminal-line {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            flex-shrink: 0;
+        }
+
+        .terminal-prompt {
+            color: var(--glow);
+            text-shadow: var(--text-glow-strong);
+            flex-shrink: 0;
+            font-weight: bold;
+            transition: color 0.35s ease, text-shadow 0.35s ease;
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--glow);
+            box-shadow: 0 0 6px var(--glow);
+            margin-left: 2px;
+            animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0; }
+        }
+
+        .terminal-status {
+            border-top: 1px solid var(--glow-faint);
+            padding: 5px 12px;
+            font-size: 10px;
+            color: var(--glow-dim);
+            display: flex;
+            justify-content: space-between;
+            letter-spacing: 1px;
+        }
+
+.data-block {
+            border: 1px solid var(--glow-faint);
+            margin: 4px 0;
+            padding: 8px 10px;
+            background: rgba(0,255,0,0.013);
+            flex-shrink: 0;
+            transition: border-color 0.35s ease, box-shadow 0.35s ease;
+        }
+
+        .data-header {
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(0,255,0,0.9);
+            font-weight: bold;
+            font-size: 13px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glow-faint);
+            padding-bottom: 5px;
+            margin-bottom: 7px;
+            transition: text-shadow 0.35s ease, border-color 0.35s ease;
+        }
+
+        .data-row {
+            display: flex;
+            gap: 8px;
+            padding: 3px 0;
+            font-size: 11px;
+        }
+
+        .data-key {
+            color: var(--glow-dim);
+            flex-shrink: 0;
+            min-width: 100px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .data-val {
+            color: var(--glow);
+            text-shadow: var(--text-glow);
+            word-break: break-word;
+            transition: color 0.35s ease, text-shadow 0.35s ease;
+        }
+
+        .data-separator {
+            border: none;
+            border-top: 1px dashed var(--glow-faint);
+            margin: 6px 0;
+            opacity: 0.45;
+        }
+
+.footer-bar {
+            flex-shrink: 0;
+            border-top: 2px solid var(--glow-dim);
+            box-shadow: 0 -2px 10px rgba(0,255,0,0.12);
+            background: rgba(0,255,0,0.018);
+            padding: 6px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: var(--glow-dim);
+            gap: 16px;
+        }
+
+        .footer-ref {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .footer-ref .ref-label {
+            color: var(--glow-faint);
+            letter-spacing: 1.5px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .footer-ref .ref-value {
+            color: var(--glow-dim);
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .footer-divider {
+            width: 1px;
+            height: 14px;
+            background: var(--glow-faint);
+            flex-shrink: 0;
+        }
+
+::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg); border-left: 1px solid var(--glow-faint); }
+        ::-webkit-scrollbar-thumb { background: var(--glow-faint); border-radius: 0; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--glow-dim); }
+
+@media (max-width: 700px) {
+            .content-split { flex-direction: column; }
+            .cn-panel { width: 76px; }
+            .footer-bar { flex-direction: column; gap: 3px; align-items: flex-start; }
+            .footer-divider { display: none; }
+            .data-row { flex-direction: column; gap: 1px; }
+            .data-key { min-width: auto; }
+            .header-meta { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+
+<div class="header-bar">
+        <span class="header-title">▶ CDIS 421 NEUROSCIENCE :: PROJECT_2 :: CHLOE VILLA-ABRILLE</span>
+        <div class="header-meta">
+            <span>KEYS: 1–9 · 0 · – · =</span>
+            <span>ESC: RESET</span>
+            <span id="headerClock">--:--:--</span>
+        </div>
+    </div>
+
+<div class="main-area">
+
+<div class="cn-panel" id="cnPanel">
+            <button class="cn-btn" data-cn="0">CN I</button>
+            <button class="cn-btn" data-cn="1">CN II</button>
+            <button class="cn-btn" data-cn="2">CN III</button>
+            <button class="cn-btn" data-cn="3">CN IV</button>
+            <button class="cn-btn" data-cn="4">CN V</button>
+            <button class="cn-btn" data-cn="5">CN VI</button>
+            <button class="cn-btn" data-cn="6">CN VII</button>
+            <button class="cn-btn" data-cn="7">CN VIII</button>
+            <button class="cn-btn" data-cn="8">CN IX</button>
+            <button class="cn-btn" data-cn="9">CN X</button>
+            <button class="cn-btn" data-cn="10">CN XI</button>
+            <button class="cn-btn" data-cn="11">CN XII</button>
+            <button class="cn-btn zoom-reset-btn" id="zoomResetBtn" title="Reset zoom (Esc)" style="border-color: rgb(50, 173, 50); color: rgb(28, 199, 28)">&#8617; RESET</button>
+        </div>
+
+<div class="content-split">
+
+<div class="viewport-panel" id="viewportPanel">
+                <div class="viewport-body" id="viewportBody">
+
+                    <svg id="brainstemSvg" viewBox="0 0 500 520" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#001800" stroke-width="0.25" opacity="0.4"/>
+                        </pattern>
+                        <radialGradient id="bsGrad" cx="50%" cy="38%" r="55%">
+                          <stop offset="0%"   stop-color="#001800" stop-opacity="0.45"/>
+                          <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+                        </radialGradient>
+                        <filter id="glow-cyan"    x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-pink"    x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-yellow"  x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-orange"  x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-red"     x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-sky"     x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-lime"    x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-blue"    x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-magenta" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-purple"  x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-amber"   x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        <filter id="glow-mint"    x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                      </defs>
+
+<rect width="500" height="520" fill="#000000"/>
+                      <rect width="500" height="520" fill="url(#grid)" opacity="0.5"/>
+                      <rect width="500" height="520" fill="url(#bsGrad)"/>
+
+<path d="M 250 16 C 222 14 182 20 150 34 C 108 56 72 88 48 130 C 26 168 18 210 18 254 C 18 296 22 334 32 368 C 48 408 80 436 122 456 C 156 472 200 480 250 482 C 300 480 344 472 378 456 C 420 436 452 408 468 368 C 478 334 482 296 482 254 C 482 210 474 168 452 130 C 428 88 392 56 350 34 C 318 20 278 14 250 16Z" fill="#010d01" stroke="#183018" stroke-width="1.5" opacity="0.95"/>
+
+<path d="M 248 16 C 220 14 178 22 145 36 C 102 58 66 92 42 134 C 22 170 16 212 16 255 C 16 298 20 336 32 370 C 48 408 80 436 122 456 C 156 472 200 480 248 482Z" fill="#010f01" stroke="none"/>
+                      <path d="M 72 102 C 56 134 46 174 44 216" fill="none" stroke="#0a220a" stroke-width="1.4" opacity="0.8"/>
+                      <path d="M 100 68 C 78 104 64 148 60 194 C 56 232 60 268 56 302" fill="none" stroke="#0a220a" stroke-width="1.4" opacity="0.8"/>
+                      <path d="M 132 44 C 110 82 98 126 96 170 C 94 208 98 244 96 282 C 94 312 90 344 96 374" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.75"/>
+                      <path d="M 168 28 C 152 66 142 110 140 154 C 138 196 142 238 140 278 C 138 316 134 352 142 386 C 150 418 172 448 200 464" fill="none" stroke="#0a220a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 208 18 C 198 56 192 100 190 145 C 188 190 192 234 192 278 C 192 318 196 356 208 390 C 220 426 242 462 248 480" fill="none" stroke="#0a220a" stroke-width="0.9" opacity="0.65"/>
+                      <path d="M 20 175 C 48 170 78 172 104 170" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 18 215 C 46 210 76 212 104 210" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 18 256 C 46 251 76 253 104 251" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 20 296 C 48 291 78 293 108 291" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 24 334 C 52 329 84 331 114 329" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 34 370 C 62 365 94 367 124 365" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 52 404 C 80 399 112 399 144 396" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.65"/>
+                      <path d="M 78 434 C 108 428 140 426 172 422" fill="none" stroke="#0a220a" stroke-width="1" opacity="0.6"/>
+
+<path d="M 252 16 C 280 14 322 22 355 36 C 398 58 434 92 458 134 C 478 170 484 212 484 255 C 484 298 480 336 468 370 C 452 408 420 436 378 456 C 344 472 300 480 252 482Z" fill="#010f01" stroke="none"/>
+                      <path d="M 428 102 C 444 134 454 174 456 216" fill="none" stroke="#0a220a" stroke-width="1.4" opacity="0.8"/>
+                      <path d="M 400 68 C 422 104 436 148 440 194 C 444 232 440 268 444 302" fill="none" stroke="#0a220a" stroke-width="1.4" opacity="0.8"/>
+                      <path d="M 368 44 C 390 82 402 126 404 170 C 406 208 402 244 404 282 C 406 312 410 344 404 374" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.75"/>
+                      <path d="M 332 28 C 348 66 358 110 360 154 C 362 196 358 238 360 278 C 362 316 366 352 358 386 C 350 418 328 448 300 464" fill="none" stroke="#0a220a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 292 18 C 302 56 308 100 310 145 C 312 190 308 234 308 278 C 308 318 304 356 292 390 C 280 426 258 462 252 480" fill="none" stroke="#0a220a" stroke-width="0.9" opacity="0.65"/>
+                      <path d="M 480 175 C 452 170 422 172 396 170" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 482 215 C 454 210 424 212 396 210" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 482 256 C 454 251 424 253 396 251" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 480 296 C 452 291 422 293 392 291" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 476 334 C 448 329 416 331 386 329" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 466 370 C 438 365 406 367 376 365" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 448 404 C 420 399 388 399 356 396" fill="none" stroke="#0a220a" stroke-width="1.2" opacity="0.65"/>
+                      <path d="M 422 434 C 392 428 360 426 328 422" fill="none" stroke="#0a220a" stroke-width="1" opacity="0.6"/>
+
+<path d="M 62 385 C 40 385 24 395 18 415 C 12 440 18 462 40 480 C 72 500 120 512 172 518 C 202 520 226 522 250 522 C 274 522 298 520 328 518 C 380 512 428 500 460 480 C 482 462 488 440 482 415 C 476 395 460 385 438 385Z" fill="#010b01" stroke="#183018" stroke-width="1.5" opacity="0.92"/>
+                      <path d="M 222 385 C 214 405 210 430 212 455 C 214 475 230 500 250 512 C 270 500 286 475 288 455 C 290 430 286 405 278 385Z" fill="#011201" stroke="#183018" stroke-width="1" opacity="0.85"/>
+                      <path d="M 42 400 C 78 395 130 392 208 390" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 36 414 C 74 408 128 405 208 403" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 30 428 C 68 422 124 418 208 415" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 26 442 C 64 436 120 432 208 428" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 24 456 C 62 450 118 445 208 440" fill="none" stroke="#0a1e0a" stroke-width="0.9" opacity="0.65"/>
+                      <path d="M 24 470 C 62 464 118 458 210 452" fill="none" stroke="#0a1e0a" stroke-width="0.9" opacity="0.65"/>
+                      <path d="M 28 484 C 66 478 122 472 214 464" fill="none" stroke="#0a1e0a" stroke-width="0.9" opacity="0.6"/>
+                      <path d="M 36 496 C 74 490 130 484 218 476" fill="none" stroke="#0a1e0a" stroke-width="0.8" opacity="0.55"/>
+                      <path d="M 458 400 C 422 395 370 392 292 390" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 464 414 C 426 408 372 405 292 403" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 470 428 C 432 422 376 418 292 415" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 474 442 C 436 436 380 432 292 428" fill="none" stroke="#0a1e0a" stroke-width="1" opacity="0.7"/>
+                      <path d="M 476 456 C 438 450 382 445 292 440" fill="none" stroke="#0a1e0a" stroke-width="0.9" opacity="0.65"/>
+                      <path d="M 476 470 C 438 464 382 458 290 452" fill="none" stroke="#0a1e0a" stroke-width="0.9" opacity="0.65"/>
+                      <path d="M 472 484 C 434 478 378 472 286 464" fill="none" stroke="#0a1e0a" stroke-width="0.9" opacity="0.6"/>
+                      <path d="M 464 496 C 426 490 370 484 282 476" fill="none" stroke="#0a1e0a" stroke-width="0.8" opacity="0.55"/>
+                      <path d="M 232 392 C 242 390 258 390 268 392" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.75"/>
+                      <path d="M 228 406 C 238 403 250 402 262 406" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.75"/>
+                      <path d="M 226 420 C 236 417 250 416 264 420" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.75"/>
+                      <path d="M 225 434 C 235 431 250 430 265 434" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.75"/>
+                      <path d="M 226 448 C 236 445 250 444 264 448" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 228 462 C 238 459 250 458 262 462" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.7"/>
+                      <path d="M 232 476 C 240 473 250 472 258 476" fill="none" stroke="#0a1e0a" stroke-width="1.2" opacity="0.65"/>
+
+<line x1="200" y1="20" x2="196" y2="92" stroke="#183018" stroke-width="0.8" opacity="0.5"/>
+                      <line x1="300" y1="20" x2="304" y2="92" stroke="#183018" stroke-width="0.8" opacity="0.5"/>
+                      <path d="M 186 103 C 200 100 224 98 250 98 C 276 98 300 100 314 103 L 314 142 C 300 145 276 147 250 147 C 224 147 200 145 186 142Z" fill="#011501" stroke="#1e4a1e" stroke-width="1.2" opacity="0.8"/>
+                      <ellipse cx="250" cy="151" rx="11" ry="7" fill="#011001" stroke="#1a4a1a" stroke-width="1" opacity="0.7"/>
+                      <circle cx="238" cy="167" r="7" fill="#012001" stroke="#1e4a1e" stroke-width="1.2" opacity="0.85"/>
+                      <circle cx="262" cy="167" r="7" fill="#012001" stroke="#1e4a1e" stroke-width="1.2" opacity="0.85"/>
+                      <ellipse cx="214" cy="187" rx="33" ry="21" fill="#012001" stroke="#1e4a1e" stroke-width="1.5" opacity="0.9"/>
+                      <ellipse cx="286" cy="187" rx="33" ry="21" fill="#012001" stroke="#1e4a1e" stroke-width="1.5" opacity="0.9"/>
+                      <path d="M 224 172 C 234 168 250 166 250 166 C 250 166 266 168 276 172 L 278 200 C 268 205 256 207 250 207 C 244 207 232 205 222 200Z" fill="#010901" stroke="#0f2a0f" stroke-width="0.8" opacity="0.8"/>
+                      <path d="M 152 210 C 152 202 166 198 182 198 L 318 198 C 334 198 348 202 348 210 L 348 278 C 348 286 334 290 318 290 L 182 290 C 166 290 152 286 152 278Z" fill="#013001" stroke="#1e5a1e" stroke-width="2" opacity="0.92"/>
+                      <line x1="250" y1="201" x2="250" y2="288" stroke="#010a01" stroke-width="5" opacity="0.7"/>
+                      <line x1="250" y1="201" x2="250" y2="288" stroke="#0d2a0d" stroke-width="1.2" opacity="0.6"/>
+                      <line x1="156" y1="220" x2="344" y2="220" stroke="#1a4a1a" stroke-width="0.7" opacity="0.3"/>
+                      <line x1="155" y1="232" x2="345" y2="232" stroke="#1a4a1a" stroke-width="0.7" opacity="0.3"/>
+                      <line x1="154" y1="244" x2="346" y2="244" stroke="#1a4a1a" stroke-width="0.7" opacity="0.3"/>
+                      <line x1="154" y1="256" x2="346" y2="256" stroke="#1a4a1a" stroke-width="0.7" opacity="0.3"/>
+                      <line x1="155" y1="268" x2="345" y2="268" stroke="#1a4a1a" stroke-width="0.7" opacity="0.3"/>
+                      <line x1="156" y1="280" x2="344" y2="280" stroke="#1a4a1a" stroke-width="0.7" opacity="0.3"/>
+                      <path d="M 152 248 C 120 244 90 242 66 248" fill="none" stroke="#183818" stroke-width="9" stroke-linecap="round" opacity="0.6"/>
+                      <path d="M 348 248 C 380 244 410 242 434 248" fill="none" stroke="#183818" stroke-width="9" stroke-linecap="round" opacity="0.6"/>
+                      <path d="M 164 290 L 158 386 Q 158 402 250 402 Q 342 402 342 386 L 336 290Z" fill="#012001" stroke="#1e4a1e" stroke-width="1.8" opacity="0.9"/>
+                      <line x1="250" y1="292" x2="250" y2="400" stroke="#010a01" stroke-width="5" opacity="0.8"/>
+                      <line x1="250" y1="292" x2="250" y2="400" stroke="#0d2a0d" stroke-width="1" opacity="0.7"/>
+                      <path d="M 227 293 C 222 310 219 338 220 364 C 221 380 226 396 232 402" fill="none" stroke="#1a4a1a" stroke-width="2.5" opacity="0.55"/>
+                      <path d="M 273 293 C 278 310 281 338 280 364 C 279 380 274 396 268 402" fill="none" stroke="#1a4a1a" stroke-width="2.5" opacity="0.55"/>
+                      <ellipse cx="193" cy="334" rx="14" ry="26" fill="#013001" stroke="#1e5a1e" stroke-width="1.2" opacity="0.85"/>
+                      <ellipse cx="307" cy="334" rx="14" ry="26" fill="#013001" stroke="#1e5a1e" stroke-width="1.2" opacity="0.85"/>
+                      <line x1="206" y1="295" x2="208" y2="398" stroke="#010a01" stroke-width="1.5" opacity="0.5"/>
+                      <line x1="294" y1="295" x2="292" y2="398" stroke="#010a01" stroke-width="1.5" opacity="0.5"/>
+                      <path d="M 224 400 C 222 410 222 428 224 438 Q 232 444 250 444 Q 268 444 276 438 C 278 428 278 410 276 400Z" fill="#011501" stroke="#1a4a1a" stroke-width="1.4" opacity="0.8"/>
+                      <line x1="250" y1="402" x2="250" y2="442" stroke="#0d2a0d" stroke-width="0.8" opacity="0.5"/>
+                      <text x="250" y="130" fill="#003600" font-family="'Courier New',monospace" font-size="6" text-anchor="middle" opacity="0.55">DIENCEPHALON</text>
+                      <text x="250" y="196" fill="#003600" font-family="'Courier New',monospace" font-size="6" text-anchor="middle" opacity="0.55">MIDBRAIN</text>
+                      <text x="250" y="244" fill="#003600" font-family="'Courier New',monospace" font-size="6" text-anchor="middle" opacity="0.5">PONS</text>
+                      <text x="250" y="348" fill="#003600" font-family="'Courier New',monospace" font-size="6" text-anchor="middle" opacity="0.5">MEDULLA</text>
+                      <text x="250" y="462" fill="#002400" font-family="'Courier New',monospace" font-size="6" text-anchor="middle" opacity="0.45">CEREBELLUM</text>
+                      <text x="466" y="510" fill="#002200" font-family="'Courier New',monospace" font-size="5.5" text-anchor="end" opacity="0.35">ANTERIOR ▲</text>
+
+<g id="path-cn1" class="nerve-path" data-color="#00ffcc" filter="url(#glow-cyan)">
+                        <ellipse cx="218" cy="46" rx="20" ry="13" fill="rgba(0,255,204,0.07)" stroke="#00ffcc" stroke-width="2"/>
+                        <ellipse cx="282" cy="46" rx="20" ry="13" fill="rgba(0,255,204,0.07)" stroke="#00ffcc" stroke-width="2"/>
+                        <path d="M 213 58 C 206 70 200 82 196 96" fill="none" stroke="#00ffcc" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 287 58 C 294 70 300 82 304 96" fill="none" stroke="#00ffcc" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 196 96 C 184 108 166 116 144 122" fill="none" stroke="#00ffcc" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 304 96 C 316 108 334 116 356 122" fill="none" stroke="#00ffcc" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="144" cy="122" r="4" fill="#00ffcc"/>
+                        <circle cx="356" cy="122" r="4" fill="#00ffcc"/>
+                        <text x="250" y="32" fill="#00ffcc" font-family="'Courier New',monospace" font-size="8" text-anchor="middle" font-weight="bold">CN I</text>
+                      </g>
+
+<g id="path-cn2" class="nerve-path" data-color="#ff66aa" filter="url(#glow-pink)">
+                        <path d="M 130 108 C 154 108 184 110 218 114" fill="none" stroke="#ff66aa" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 370 108 C 346 108 316 110 282 114" fill="none" stroke="#ff66aa" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 218 114 C 230 116 242 118 250 118 C 258 118 270 116 282 114" fill="none" stroke="#ff66aa" stroke-width="4" stroke-linecap="round"/>
+                        <path d="M 224 110 C 238 118 252 122 264 128" fill="none" stroke="#ff66aa" stroke-width="1.8" stroke-dasharray="3,2" opacity="0.7"/>
+                        <path d="M 276 110 C 262 118 248 122 236 128" fill="none" stroke="#ff66aa" stroke-width="1.8" stroke-dasharray="3,2" opacity="0.7"/>
+                        <path d="M 250 122 C 228 126 205 132 186 142" fill="none" stroke="#ff66aa" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 250 122 C 272 126 295 132 314 142" fill="none" stroke="#ff66aa" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="130" cy="108" r="4" fill="#ff66aa"/>
+                        <circle cx="370" cy="108" r="4" fill="#ff66aa"/>
+                        <text x="250" y="100" fill="#ff66aa" font-family="'Courier New',monospace" font-size="8" text-anchor="middle" font-weight="bold">CN II</text>
+                      </g>
+
+<g id="path-cn3" class="nerve-path" data-color="#ffdd00" filter="url(#glow-yellow)">
+                        <path d="M 237 196 C 210 190 178 184 146 180" fill="none" stroke="#ffdd00" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M 263 196 C 290 190 322 184 354 180" fill="none" stroke="#ffdd00" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="146" cy="180" r="4" fill="#ffdd00"/>
+                        <circle cx="354" cy="180" r="4" fill="#ffdd00"/>
+                        <text x="250" y="172" fill="#ffdd00" font-family="'Courier New',monospace" font-size="7.5" text-anchor="middle" font-weight="bold">CN III</text>
+                      </g>
+
+<g id="path-cn4" class="nerve-path" data-color="#ff8833" filter="url(#glow-orange)">
+                        <path d="M 222 205 C 196 201 168 198 146 203" fill="none" stroke="#ff8833" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 278 205 C 304 201 332 198 354 203" fill="none" stroke="#ff8833" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="146" cy="203" r="3.5" fill="#ff8833"/>
+                        <circle cx="354" cy="203" r="3.5" fill="#ff8833"/>
+                        <text x="250" y="218" fill="#ff8833" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN IV</text>
+                      </g>
+
+<g id="path-cn5" class="nerve-path" data-color="#ff4455" filter="url(#glow-red)">
+                        <path d="M 163 242 C 140 238 112 230 98 224" fill="none" stroke="#ff4455" stroke-width="4.5" stroke-linecap="round"/>
+                        <ellipse cx="79" cy="222" rx="19" ry="12" fill="rgba(60,0,8,0.6)" stroke="#ff4455" stroke-width="2.2"/>
+                        <path d="M 66 211 C 50 200 32 185 14 170" fill="none" stroke="#ff4455" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 62 222 C 46 220 30 219 13 218" fill="none" stroke="#ff4455" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 66 232 C 50 244 33 256 15 268" fill="none" stroke="#ff4455" stroke-width="2" stroke-linecap="round"/>
+
+<path d="M 337 242 C 360 238 388 230 402 224" fill="none" stroke="#ff4455" stroke-width="4.5" stroke-linecap="round"/>
+                        <ellipse cx="421" cy="222" rx="19" ry="12" fill="rgba(60,0,8,0.6)" stroke="#ff4455" stroke-width="2.2"/>
+                        <path d="M 434 211 C 450 200 468 185 486 170" fill="none" stroke="#ff4455" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 438 222 C 454 220 470 219 487 218" fill="none" stroke="#ff4455" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 434 232 C 450 244 467 256 485 268" fill="none" stroke="#ff4455" stroke-width="2" stroke-linecap="round"/>
+
+                        <text x="250" y="232" fill="#ff4455" font-family="'Courier New',monospace" font-size="7.5" text-anchor="middle" font-weight="bold">CN V</text>
+                      </g>
+
+<g id="path-cn6" class="nerve-path" data-color="#44ddff" filter="url(#glow-sky)">
+                        <path d="M 228 267 C 200 264 167 262 132 267" fill="none" stroke="#44ddff" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 272 267 C 300 264 333 262 368 267" fill="none" stroke="#44ddff" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="132" cy="267" r="3.5" fill="#44ddff"/>
+                        <circle cx="368" cy="267" r="3.5" fill="#44ddff"/>
+                        <text x="250" y="258" fill="#44ddff" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN VI</text>
+                      </g>
+
+<g id="path-cn7" class="nerve-path" data-color="#44ff44" filter="url(#glow-lime)">
+                        <path d="M 174 292 C 148 292 118 298 76 314" fill="none" stroke="#44ff44" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 326 292 C 352 292 382 298 424 314" fill="none" stroke="#44ff44" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="76" cy="314" r="3.5" fill="#44ff44"/>
+                        <circle cx="424" cy="314" r="3.5" fill="#44ff44"/>
+                        <text x="250" y="284" fill="#44ff44" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN VII</text>
+                      </g>
+
+<g id="path-cn8" class="nerve-path" data-color="#4488ff" filter="url(#glow-blue)">
+                        <path d="M 174 305 C 148 305 118 311 76 327" fill="none" stroke="#4488ff" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 326 305 C 352 305 382 311 424 327" fill="none" stroke="#4488ff" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="76" cy="327" r="3.5" fill="#4488ff"/>
+                        <circle cx="424" cy="327" r="3.5" fill="#4488ff"/>
+                        <text x="250" y="299" fill="#4488ff" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN VIII</text>
+                      </g>
+
+<g id="path-cn9" class="nerve-path" data-color="#ff55cc" filter="url(#glow-magenta)">
+                        <path d="M 181 322 C 153 327 118 336 72 350" fill="none" stroke="#ff55cc" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M 319 322 C 347 327 382 336 428 350" fill="none" stroke="#ff55cc" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="72" cy="350" r="3.5" fill="#ff55cc"/>
+                        <circle cx="428" cy="350" r="3.5" fill="#ff55cc"/>
+                        <text x="250" y="313" fill="#ff55cc" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN IX</text>
+                      </g>
+
+<g id="path-cn12" class="nerve-path" data-color="#00ff88" filter="url(#glow-mint)">
+                        <path d="M 215 312 C 192 312 168 318 134 322" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M 215 326 C 192 326 168 330 134 332" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M 215 340 C 192 342 168 342 134 338" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M 215 355 C 192 356 168 354 134 346" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <line x1="134" y1="322" x2="134" y2="346" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="134" cy="334" r="4" fill="#00ff88"/>
+                        <path d="M 285 312 C 308 312 332 318 366 322" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M 285 326 C 308 326 332 330 366 332" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M 285 340 C 308 342 332 342 366 338" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M 285 355 C 308 356 332 354 366 346" fill="none" stroke="#00ff88" stroke-width="1.8" stroke-linecap="round"/>
+                        <line x1="366" y1="322" x2="366" y2="346" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="366" cy="334" r="4" fill="#00ff88"/>
+                        <text x="250" y="329" fill="#00ff88" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN XII</text>
+                      </g>
+
+<g id="path-cn10" class="nerve-path" data-color="#aa55ff" filter="url(#glow-purple)">
+                        <path d="M 181 340 C 153 346 118 354 70 368" fill="none" stroke="#aa55ff" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 181 352 C 153 358 118 366 70 380" fill="none" stroke="#aa55ff" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="70" y1="368" x2="70" y2="380" stroke="#aa55ff" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="70" cy="374" r="3.5" fill="#aa55ff"/>
+                        <path d="M 319 340 C 347 346 382 354 430 368" fill="none" stroke="#aa55ff" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 319 352 C 347 358 382 366 430 380" fill="none" stroke="#aa55ff" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="430" y1="368" x2="430" y2="380" stroke="#aa55ff" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="430" cy="374" r="3.5" fill="#aa55ff"/>
+                        <text x="250" y="346" fill="#aa55ff" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN X</text>
+                      </g>
+
+<g id="path-cn11" class="nerve-path" data-color="#ff9900" filter="url(#glow-amber)">
+                        <path d="M 181 362 C 153 368 118 378 68 391" fill="none" stroke="#ff9900" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 181 372 C 153 379 117 388 68 400" fill="none" stroke="#ff9900" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 225 422 C 196 414 148 406 68 400" fill="none" stroke="#ff9900" stroke-width="1.8" stroke-dasharray="5,3" stroke-linecap="round" opacity="0.9"/>
+                        <path d="M 225 440 C 196 431 150 423 68 413" fill="none" stroke="#ff9900" stroke-width="1.6" stroke-dasharray="5,3" stroke-linecap="round" opacity="0.7"/>
+                        <line x1="68" y1="391" x2="68" y2="400" stroke="#ff9900" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="68" cy="395" r="3.5" fill="#ff9900"/>
+
+<path d="M 319 362 C 347 368 382 378 432 391" fill="none" stroke="#ff9900" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 319 372 C 347 379 383 388 432 400" fill="none" stroke="#ff9900" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M 275 422 C 304 414 352 406 432 400" fill="none" stroke="#ff9900" stroke-width="1.8" stroke-dasharray="5,3" stroke-linecap="round" opacity="0.9"/>
+                        <path d="M 275 440 C 304 431 350 423 432 413" fill="none" stroke="#ff9900" stroke-width="1.6" stroke-dasharray="5,3" stroke-linecap="round" opacity="0.7"/>
+                        <line x1="432" y1="391" x2="432" y2="400" stroke="#ff9900" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="432" cy="395" r="3.5" fill="#ff9900"/>
+
+                        <text x="250" y="369" fill="#ff9900" font-family="'Courier New',monospace" font-size="7" text-anchor="middle" font-weight="bold">CN XI</text>
+                      </g>
+
+                    </svg>
+
+                </div>
+                <div class="viewport-status" id="viewportStatus">
+                    <span>MODE: STANDBY (BRAIN)</span>
+                    <span>FPS: --</span>
+                    <span>RES: 500 × 500</span>
+                </div>
+            </div>
+
+<div class="terminal-panel" id="terminalPanel">
+                <div class="terminal-body" id="terminalBody">
+                    <div class="terminal-line" id="cursorLine">
+                        <span class="terminal-prompt">root@cranial:~$</span>
+                        <span> </span>
+                        <span class="terminal-cursor"></span>
+                    </div>
+                </div>
+                <div class="terminal-status" id="terminalStatusBar">
+                    <span>CONN: LOCALHOST</span>
+                    <span>TTY: pts/2</span>
+                    <span>UPTIME: 00:00:00</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<footer class="footer-bar">
+        <div class="footer-ref">
+            <span class="ref-label">REF_01:</span>
+            <span class="ref-value" id="footerRef1">[System ready — select a cranial nerve to begin]</span>
+        </div>
+        <span class="footer-divider"></span>
+        <div class="footer-ref">
+            <span class="ref-label">REF_02:</span>
+            <span class="ref-value" id="footerRef2">[12 nerve records loaded · keys 1–9 · 0 · – · = · ESC=reset]</span>
+        </div>
+    </footer>
+
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+var cranialNerves = [
+        {
+            number: 'I',
+            name: 'Olfactory',
+            type: 'Sensory (Special Visceral Afferent — SVA)',
+            location: 'Most rostral and superior cranial nerve. Arises from the ventral surface of the cerebrum (Andreatta, 2024, p. 150). One of only two nerves to project directly into the brain or thalamus without passing through the brainstem (Andreatta, 2024, p. 150). Internally considered a CNS structure, not a peripheral nerve. Filaments pass through the cribriform plate of ethmoid bone to reach the olfactory bulb (Andreatta, 2024, p. 159).',
+            function: 'Sense of smell (olfaction) (Pulliam, 2026; Andreatta, 2024, p. 156). Transduces and discriminates airborne chemical odorants (Pulliam, 2026).',
+            clinical_test: 'Place coffee, cinnamon, or other fragrant substances under each nostril of the patient and ask them to acknowledge detection of the odor and its source (Pulliam, 2026; Andreatta, 2024, p. 158).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'II',
+            name: 'Optic',
+            type: 'Sensory (Special Somatic Afferent — SSA)',
+            location: 'Sits caudal to CN I, rostral and superior to the brainstem. Emerges from the ventral surface of the cerebrum (Andreatta, 2024, p. 150). Originates from retinal ganglion cells and terminates at the optic chiasm, ventral and medial to the crus cerebri (Pulliam, 2026; Andreatta, 2024, p. 150).',
+            function: 'Mediates sensory vision (Pulliam, 2026; Andreatta, 2024, p. 156). Carries high-acuity color signals from cones and low-light signals from rods in the retina to the brain (Andreatta, 2024, p. 159).',
+            clinical_test: 'Snellen Test for visual acuity: patient reads letters from a card (Pulliam, 2026). Confrontational visual field exam: patient indicates when a finger first becomes visible as it moves through different quadrants (Pulliam, 2026; Andreatta, 2024, p. 159).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'III',
+            name: 'Oculomotor',
+            type: 'Motor (General Somatic Efferent — GSE + General Visceral Efferent — GVE)',
+            location: 'Emerges from the ventral brainstem at a midline location near the junction of the mesencephalon and pons (Andreatta, 2024, p. 160). Inferior to CN II and superior to CN IV. Nuclei reside in the superior mesencephalon (midbrain). The Edinger-Westphal nucleus lies medial to the oculomotor nucleus (Andreatta, 2024, p. 160-161).',
+            function: 'GSE: Eye motion and eyelid elevation; innervates the superior, inferior, and medial rectus, and inferior oblique extraocular muscles (Pulliam, 2026; Andreatta, 2024, p. 160). GVE: Pupillary reflex to control light entering the eye (Pulliam, 2026; Andreatta, 2024, p. 161).',
+            clinical_test: 'Tracking: draw an H pattern in space for the patient to follow (Pulliam, 2026). Pupillary reflex: flash penlight into pupil — both pupils should contract synchronously (Pulliam, 2026; Andreatta, 2024, p. 161).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'IV',
+            name: 'Trochlear',
+            type: 'Motor (General Somatic Efferent — GSE)',
+            location: 'The only cranial nerve that exits the brainstem dorsally, then wraps around the brainstem ventrally to reach the eye muscles (Andreatta, 2024, p. 161). Nucleus lies in the mesencephalon, ventral to the periaqueductal gray (Andreatta, 2024, p. 161).',
+            function: 'Governs eye motion via the superior oblique muscle, which rotates the eyeball downward and medially (Pulliam, 2026; Andreatta, 2024, p. 156, 161).',
+            clinical_test: 'Assessed with CN III and VI using the H pattern in space (Pulliam, 2026). Patient tracks an object moving downward within the medial field of view to check for synchronized motion (Andreatta, 2024, p. 162).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'V',
+            name: 'Trigeminal',
+            type: 'Mixed (General Somatic Afferent — GSA + Special Visceral Efferent — SVE)',
+            location: 'Emerges from the lateral aspects of the ventral pons (Andreatta, 2024, p. 162). Caudal to CN IV and rostral to CN VI. Has a broad sensory complex of nuclei spanning from the midbrain down through the medulla; motor nucleus is within the pons (Andreatta, 2024, p. 156, 163).',
+            function: 'GSA: Somatosensation from facial skin and oral/nasal linings (Pulliam, 2026). SVE: Innervates the muscles of mastication for chewing (Pulliam, 2026; Andreatta, 2024, p. 156).',
+            clinical_test: 'Sensory: using a wisp of cotton, lightly touch the face in various skin territories (Pulliam, 2026). Motor: palpate masseter and temporalis while lightly clenching teeth to check for symmetrical contraction (Pulliam, 2026).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'VI',
+            name: 'Abducens',
+            type: 'Motor (General Somatic Efferent — GSE)',
+            location: 'Fibers emerge from the ventral brainstem at the junction of the pons and medulla in the midline (Andreatta, 2024, p. 165). Lies medial to CN VII. Nucleus is in the lower midsection of the pons in the dorsal tegmentum (Andreatta, 2024, p. 165).',
+            function: 'Eye motion via the lateral rectus muscle, pulling the eyeball outward and laterally (Pulliam, 2026; Andreatta, 2024, p. 165).',
+            clinical_test: 'Direct the patient\'s gaze toward an object located in the tested eye\'s lateral field of view while keeping the head still (Pulliam, 2026; Andreatta, 2024, p. 165).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'VII',
+            name: 'Facial',
+            type: 'Mixed (SVE + GVE + SVA + GSA)',
+            location: 'Exits the ventral brainstem at the pontomedullary junction, just lateral to CN VI (Andreatta, 2024, p. 166). Rostral and superior to the medullary nerves. Primary motor nucleus sits laterally in the tegmentum of the pons, ventral to the floor of the 4th ventricle (Andreatta, 2024, p. 166).',
+            function: 'Motor for facial expression (SVE); secretion of nasal, lacrimal, submaxillary, and sublingual glands (GVE); taste to anterior 2/3 of tongue (SVA) (Pulliam, 2026; Andreatta, 2024, p. 157).',
+            clinical_test: 'Observe symmetry of upper vs. lower face motion during smiling, lip rounding, and pouting (Pulliam, 2026). Taste assessed using flavored tongue depressors (Pulliam, 2026; Andreatta, 2024, p. 168).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'VIII',
+            name: 'Vestibulocochlear',
+            type: 'Sensory (Special Somatic Afferent — SSA)',
+            location: 'Sensory fibers enter the brainstem laterally at the border between the medulla and pons (Andreatta, 2024, p. 167). Lateral to CN VII. Vestibular and cochlear nuclei occupy the dorsal and dorsolateral aspect of the mid-medulla through the caudal pons (Andreatta, 2024, p. 168).',
+            function: 'Equilibrium and hearing (Pulliam, 2026). Mediates acoustic signals from the cochlea and balance signals from the semicircular canals (Andreatta, 2024, p. 167).',
+            clinical_test: 'Hearing: Standard Pure-tone Audiometry and tuning fork tests including the Weber Test and Rinne Test (Pulliam, 2026). Balance: rotational chair assessment (Andreatta, 2024, p. 168).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'IX',
+            name: 'Glossopharyngeal',
+            type: 'Mixed (SVE + GVE + GVA + SVA + GSA)',
+            location: 'Fibers exit the brainstem at the pontomedullary junction, lateral to CN VIII (Andreatta, 2024, p. 169). Shares the nucleus ambiguus, located in the upper two thirds of the medulla, medial to the spinal trigeminal nucleus (Andreatta, 2024, p. 169).',
+            function: 'Motor fibers to pharynx for swallowing (SVE); parotid salivary gland secretion (GVE); taste from posterior 1/3 of tongue (SVA) (Pulliam, 2026; Andreatta, 2024, p. 158).',
+            clinical_test: 'Tested with CN X by eliciting a swallow and gag reflex using a tongue depressor (Andreatta, 2024, p. 174).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'X',
+            name: 'Vagus',
+            type: 'Mixed (Motor + Sensory + Autonomic)',
+            location: 'Exits the brainstem from the ventrolateral part of the medulla, just behind the pyramids (Andreatta, 2024, p. 172). Caudal and inferior to CN IX. Arises from several medullary nuclei including the dorsal motor nucleus of vagus and the nucleus ambiguus (Andreatta, 2024, p. 158).',
+            function: 'Most widespread distribution of any cranial nerve: motor/sensory control for the velum, pharynx, and larynx; autonomic control for cardiac, respiratory, and GI tract functions (Pulliam, 2026; Andreatta, 2024, p. 171).',
+            clinical_test: 'Ask the client to perform a voluntary cough; observe the sequence of muscle contractions during a voluntary swallow (Andreatta, 2024, p. 174).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'XI',
+            name: 'Spinal Accessory',
+            type: 'Motor (Special Visceral Efferent — SVE)',
+            location: 'Originates from the lower-most medulla and the upper segments of the cervical spinal cord (Andreatta, 2024, p. 174). Most caudal and inferior cranial nerve. The accessory nucleus spans from the lower medulla down into the upper cervical spinal cord (Andreatta, 2024, p. 174).',
+            function: 'Innervates the trapezius and sternocleidomastoid muscles, used for shoulder shrugging and rotating and flexing the neck (Pulliam, 2026; Andreatta, 2024, p. 174).',
+            clinical_test: 'Shoulder Shrug test: patient lifts shoulders against the clinician\'s downward pressure (Pulliam, 2026; Andreatta, 2024, p. 174). Head turning: patient turns head against resistance (Pulliam, 2026).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        },
+        {
+            number: 'XII',
+            name: 'Hypoglossal',
+            type: 'Motor (General Somatic Efferent — GSE)',
+            location: 'Exits the ventral medulla between the pyramids and the olivary eminences on each side (Andreatta, 2024, p. 160). Medial to CN IX and X. The hypoglossal nucleus is near the midline and dorsal to the pyramids (Pulliam, 2026; Andreatta, 2024, p. 158).',
+            function: 'Innervates intrinsic and extrinsic tongue muscles, enabling the complex movements required for speech and swallowing (Pulliam, 2026; Andreatta, 2024, p. 158).',
+            clinical_test: 'Ask patient to protrude and retract the tongue body, or use the tip of the tongue to trace the entire circumference of the lip vermilion to check range of motion and symmetry (Pulliam, 2026; Andreatta, 2024, p. 175).',
+            citation: 'Pulliam, W. (2026, June 10). Chapter 5: Cranial nerves [PowerPoint slides]. Dept. of Communicative Disorders, Eastern New Mexico University. | Andreatta, R. D. (2024). Neuroscience fundamentals for communication sciences and disorders (2nd ed.). Plural Publishing.'
+        }
+    ]
+
+var nerveColors = [
+        '#00ffcc', // CN I   — Cyan
+        '#ff66aa', // CN II  — Pink
+        '#ffdd00', // CN III — Yellow
+        '#ff8833', // CN IV  — Orange
+        '#ff4455', // CN V   — Red
+        '#44ddff', // CN VI  — Sky Blue
+        '#44ff44', // CN VII — Lime
+        '#4488ff', // CN VIII— Blue
+        '#ff55cc', // CN IX  — Magenta
+        '#aa55ff', // CN X   — Purple
+        '#ff9900', // CN XI  — Amber
+        '#00ff88'  // CN XII — Mint
+    ];
+
+var terminalBody     = document.getElementById('terminalBody');
+    var cursorLine       = document.getElementById('cursorLine');
+    var viewportStatus   = document.getElementById('viewportStatus');
+    var terminalStatusBar= document.getElementById('terminalStatusBar');
+    var terminalPanel    = document.getElementById('terminalPanel');
+    var viewportPanel    = document.getElementById('viewportPanel');
+    var footerRef1       = document.getElementById('footerRef1');
+    var footerRef2       = document.getElementById('footerRef2');
+    var brainstemSvg     = document.getElementById('brainstemSvg');
+    var headerClock      = document.getElementById('headerClock');
+    var cnButtons        = document.querySelectorAll('.cn-btn');
+
+var nerveFocusCoords = [
+        { cx: 250, cy:  58 },   // CN I   — Olfactory bulbs
+        { cx: 250, cy: 114 },   // CN II  — Optic chiasm
+        { cx: 250, cy: 188 },   // CN III — Interpeduncular fossa
+        { cx: 250, cy: 204 },   // CN IV  — Dorsal midbrain (caudal to III)
+        { cx: 250, cy: 237 },   // CN V   — Pons root & ganglion
+        { cx: 250, cy: 265 },   // CN VI  — Pontomedullary junction (medial)
+        { cx: 250, cy: 302 },   // CN VII — CPA, posterolateral
+        { cx: 250, cy: 315 },   // CN VIII— IAC alongside VII
+        { cx: 250, cy: 334 },   // CN IX  — Postolivary sulcus
+        { cx: 250, cy: 356 },   // CN X   — Postolivary sulcus
+        { cx: 250, cy: 388 },   // CN XI  — Lower medulla + spinal roots
+        { cx: 250, cy: 332 }    // CN XII — Preolivary sulcus (medial to IX/X/XI)
+    ];
+
+    var ZOOM_W = 220;
+    var ZOOM_H = 185;
+    var animId = null;
+
+function hexToRgb(hex) {
+        var h = hex.replace('#', '');
+        return {
+            r: parseInt(h.substring(0, 2), 16),
+            g: parseInt(h.substring(2, 4), 16),
+            b: parseInt(h.substring(4, 6), 16)
+        };
+    }
+
+function getNerveViewBox(index) {
+        var c = nerveFocusCoords[index];
+        var vx = Math.max(0, Math.min(c.cx - ZOOM_W / 2, 500 - ZOOM_W));
+        var vy = Math.max(0, Math.min(c.cy - ZOOM_H / 2, 520 - ZOOM_H));
+        return [vx, vy, ZOOM_W, ZOOM_H];
+    }
+
+function animateViewBox(target, duration) {
+        duration = duration || 420;
+        if (animId) { cancelAnimationFrame(animId); animId = null; }
+
+        var cur = (brainstemSvg.getAttribute('viewBox') || '0 0 500 500').split(/\s+/);
+        var s = { x: parseFloat(cur[0])||0, y: parseFloat(cur[1])||0, w: parseFloat(cur[2])||500, h: parseFloat(cur[3])||500 };
+        var tgt = { x: target[0], y: target[1], w: target[2], h: target[3] };
+        var t0 = performance.now();
+
+        function step(ts) {
+            var raw = Math.min((ts - t0) / duration, 1);
+            var t   = raw < 0.5 ? 2*raw*raw : -1 + (4 - 2*raw)*raw;
+            brainstemSvg.setAttribute('viewBox',
+                (s.x + (tgt.x-s.x)*t) + ' ' +
+                (s.y + (tgt.y-s.y)*t) + ' ' +
+                (s.w + (tgt.w-s.w)*t) + ' ' +
+                (s.h + (tgt.h-s.h)*t)
+            );
+            if (raw < 1) animId = requestAnimationFrame(step);
+            else animId = null;
+        }
+        animId = requestAnimationFrame(step);
+    }
+
+function highlightNervePath(index) {
+        var paths = brainstemSvg.querySelectorAll('.nerve-path');
+        paths.forEach(function (p, i) {
+            p.style.transition = 'opacity 0.35s ease';
+            p.style.opacity    = (i === index) ? '1' : '0.12';
+        });
+    }
+
+function applyNerveColor(index) {
+        var color = nerveColors[index];
+        var rgb   = hexToRgb(color);
+        var r = rgb.r, g = rgb.g, b = rgb.b;
+
+terminalPanel.style.borderColor = color;
+        terminalPanel.style.boxShadow   =
+            '0 0 8px rgba(' + r + ',' + g + ',' + b + ',0.45), ' +
+            'inset 0 0 30px rgba(' + r + ',' + g + ',' + b + ',0.04)';
+
+viewportPanel.style.borderColor = color;
+        viewportPanel.style.boxShadow   =
+            '0 0 6px rgba(' + r + ',' + g + ',' + b + ',0.3), ' +
+            'inset 0 0 30px rgba(' + r + ',' + g + ',' + b + ',0.03)';
+
+cnButtons.forEach(function (btn, i) {
+            if (i === index) {
+                btn.style.borderColor = color;
+                btn.style.boxShadow   = '0 0 16px rgba(' + r + ',' + g + ',' + b + ',0.85), inset 0 0 10px rgba(' + r + ',' + g + ',' + b + ',0.18)';
+                btn.style.color       = '#ffffff';
+                btn.style.background  = 'rgba(' + r + ',' + g + ',' + b + ',0.12)';
+            } else {
+                btn.style.borderColor = '';
+                btn.style.boxShadow   = '';
+                btn.style.color       = '';
+                btn.style.background  = '';
+            }
+        });
+
+var dataBlock = terminalBody.querySelector('.data-block');
+        if (dataBlock) {
+            dataBlock.style.borderColor = 'rgba(' + r + ',' + g + ',' + b + ',0.4)';
+            dataBlock.style.boxShadow   = '0 0 5px rgba(' + r + ',' + g + ',' + b + ',0.12)';
+            dataBlock.style.background  = 'rgba(' + r + ',' + g + ',' + b + ',0.025)';
+
+            var header = dataBlock.querySelector('.data-header');
+            if (header) {
+                header.style.textShadow  = '0 0 12px rgba(' + r + ',' + g + ',' + b + ',0.95)';
+                header.style.borderColor = 'rgba(' + r + ',' + g + ',' + b + ',0.3)';
+            }
+
+            var vals = dataBlock.querySelectorAll('.data-val');
+            vals.forEach(function (v) {
+                v.style.color      = color;
+                v.style.textShadow = '0 0 4px rgba(' + r + ',' + g + ',' + b + ',0.55)';
+            });
+        }
+
+var prompts = terminalBody.querySelectorAll('.terminal-prompt');
+        prompts.forEach(function (p) {
+            p.style.color      = color;
+            p.style.textShadow = '0 0 8px rgba(' + r + ',' + g + ',' + b + ',0.75)';
+        });
+
+var cursor = document.querySelector('.terminal-cursor');
+        if (cursor) {
+            cursor.style.background = color;
+            cursor.style.boxShadow  = '0 0 6px ' + color;
+        }
+
+var statusBar = document.querySelector('.viewport-status');
+        if (statusBar) {
+            statusBar.style.borderColor = 'rgba(' + r + ',' + g + ',' + b + ',0.3)';
+        }
+    }
+
+function resetColors() {
+        terminalPanel.style.borderColor = '';
+        terminalPanel.style.boxShadow   = '';
+        viewportPanel.style.borderColor = '';
+        viewportPanel.style.boxShadow   = '';
+
+        cnButtons.forEach(function (btn) {
+            btn.style.borderColor = '';
+            btn.style.boxShadow   = '';
+            btn.style.color       = '';
+            btn.style.background  = '';
+        });
+
+        var prompts = terminalBody.querySelectorAll('.terminal-prompt');
+        prompts.forEach(function (p) {
+            p.style.color = '';
+            p.style.textShadow = '';
+        });
+
+        var cursor = document.querySelector('.terminal-cursor');
+        if (cursor) {
+            cursor.style.background = '';
+            cursor.style.boxShadow  = '';
+        }
+
+        var statusBar = document.querySelector('.viewport-status');
+        if (statusBar) { statusBar.style.borderColor = ''; }
+    }
+
+function resetSvgView() {
+        animateViewBox([0, 0, 500, 520], 500);
+        var paths = brainstemSvg.querySelectorAll('.nerve-path');
+        paths.forEach(function (p) {
+            p.style.transition = 'opacity 0.4s ease';
+            p.style.opacity    = '1';
+        });
+    }
+
+function renderNerveData(nerve) {
+        var children = terminalBody.querySelectorAll('.terminal-line, .data-block, .data-separator');
+        children.forEach(function (el) {
+            if (el !== cursorLine && !cursorLine.contains(el)) el.remove();
+        });
+
+        var before = cursorLine;
+
+var cmd = document.createElement('div');
+        cmd.className = 'terminal-line';
+        cmd.innerHTML =
+            '<span class="terminal-prompt">root@cranial:~$</span>' +
+            '<span>cat /data/cn' + nerve.number.toLowerCase() + '.json --format=detailed</span>';
+        terminalBody.insertBefore(cmd, before);
+
+var block = document.createElement('div');
+        block.className = 'data-block';
+
+        var hdr = document.createElement('div');
+        hdr.className = 'data-header';
+        hdr.textContent = '\u2550\u2550 CN ' + nerve.number + ' \u2014 ' + nerve.name.toUpperCase() + ' \u2550\u2550';
+        block.appendChild(hdr);
+
+        var fields = [
+            { key: 'NUMBER:',        val: 'CN ' + nerve.number },
+            { key: 'NAME:',          val: nerve.name },
+            { key: 'TYPE:',          val: nerve.type },
+            { key: 'LOCATION:',      val: nerve.location },
+            { key: 'FUNCTION:',      val: nerve.function },
+            { key: 'CLINICAL TEST:', val: nerve.clinical_test },
+            { key: 'CITATION:',      val: nerve.citation }
+        ];
+
+        fields.forEach(function (f) {
+            var row   = document.createElement('div');
+            row.className = 'data-row';
+            var key   = document.createElement('span');
+            key.className = 'data-key';
+            key.textContent = f.key;
+            var val   = document.createElement('span');
+            val.className = 'data-val';
+            val.textContent = f.val;
+            row.appendChild(key);
+            row.appendChild(val);
+            block.appendChild(row);
+        });
+
+        terminalBody.insertBefore(block, before);
+
+var sep = document.createElement('hr');
+        sep.className = 'data-separator';
+        terminalBody.insertBefore(sep, before);
+
+var ok = document.createElement('div');
+        ok.className = 'terminal-line';
+        ok.innerHTML =
+            '<span class="terminal-prompt">[OK]</span>' +
+            '<span>Record retrieved: CN ' + nerve.number + ' (' + nerve.name + ') &mdash; ' + nerve.type.split(' ')[0] + ' fiber.</span>';
+        terminalBody.insertBefore(ok, before);
+
+        terminalBody.scrollTop = 0;
+    }
+
+function updateViewportStatus(nerve, zoomed) {
+        var spans = viewportStatus.querySelectorAll('span');
+        if (spans.length >= 3) {
+            spans[0].textContent = 'MODE: CN-' + nerve.number + ' ACTIVE';
+            spans[1].textContent = 'FPS: --';
+            spans[2].textContent = zoomed
+                ? 'RES: ' + ZOOM_W + '\u00d7' + ZOOM_H + ' (ZOOM)'
+                : 'RES: 500\u00d7500';
+        }
+    }
+
+function updateFooterRefs(nerve) {
+        if (footerRef1) {
+            footerRef1.textContent = '[CN ' + nerve.number + ' \u2014 ' + nerve.name + ' | ' + nerve.type + ']';
+        }
+        if (footerRef2) {
+            var cite = nerve.citation;
+            if (cite.length > 95) cite = cite.substring(0, 92) + '...';
+            footerRef2.textContent = '[Cite: ' + cite + ']';
+        }
+    }
+
+function handleCNClick(index) {
+        var nerve = cranialNerves[index];
+        if (!nerve) return;
+
+        cnButtons.forEach(function (btn, i) {
+            if (i === index) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+var vb = getNerveViewBox(index);
+        animateViewBox(vb, 430);
+        highlightNervePath(index);
+
+renderNerveData(nerve);
+
+applyNerveColor(index);
+
+updateViewportStatus(nerve, true);
+        updateFooterRefs(nerve);
+    }
+
+function doReset() {
+        resetSvgView();
+        resetColors();
+        cnButtons.forEach(function (btn) { btn.classList.remove('active'); });
+        var spans = viewportStatus.querySelectorAll('span');
+        if (spans.length >= 3) {
+            spans[0].textContent = 'MODE: STANDBY';
+            spans[2].textContent = 'RES: 500\u00d7500';
+        }
+    }
+
+cnButtons.forEach(function (btn, i) {
+        btn.addEventListener('click', function () { handleCNClick(i); });
+    });
+
+    var zoomResetBtn = document.getElementById('zoomResetBtn');
+    if (zoomResetBtn) zoomResetBtn.addEventListener('click', function () { doReset(); });
+
+document.addEventListener('keydown', function (e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+        var key = e.key;
+        var idx = -1;
+
+        if (key >= '1' && key <= '9')       idx = parseInt(key) - 1;
+        else if (key === '0')                idx = 9;
+        else if (key === '-' || key === '_') idx = 10;
+        else if (key === '=' || key === '+') idx = 11;
+        else if (key === 'Escape')           { doReset(); return; }
+
+        if (idx >= 0 && idx < 12) {
+            e.preventDefault();
+            handleCNClick(idx);
+        }
+    });
+
+brainstemSvg.addEventListener('dblclick', function () { doReset(); });
+
+function updateClock() {
+        var now = new Date();
+        var hh  = String(now.getHours()).padStart(2,'0');
+        var mm  = String(now.getMinutes()).padStart(2,'0');
+        var ss  = String(now.getSeconds()).padStart(2,'0');
+        if (headerClock) headerClock.textContent = hh + ':' + mm + ':' + ss;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+var startTime = Date.now();
+    function updateUptime() {
+        var e = Math.floor((Date.now() - startTime) / 1000);
+        var h = String(Math.floor(e / 3600)).padStart(2,'0');
+        var m = String(Math.floor((e % 3600) / 60)).padStart(2,'0');
+        var s = String(e % 60).padStart(2,'0');
+        var spans = terminalStatusBar.querySelectorAll('span');
+        if (spans[2]) spans[2].textContent = 'UPTIME: ' + h + ':' + m + ':' + s;
+    }
+    setInterval(updateUptime, 1000);
+
+(function init() {
+        brainstemSvg.setAttribute('viewBox', '0 0 500 520');
+
+        var children = terminalBody.querySelectorAll('.terminal-line, .data-block, .data-separator');
+        children.forEach(function (el) {
+            if (el !== cursorLine && !cursorLine.contains(el)) el.remove();
+        });
+
+        var bootLines = [
+            { prompt: 'root@cranial:~$', text: 'systemctl start cranial-terminal.service' },
+            { prompt: '[OK]',            text: 'Neural imagery initialized. 12 cranial nerve records loaded.' },
+            { prompt: '[INFO]',          text: 'Keyboard: press 1-9, 0, -, = to select CN I-XII.' },
+            { prompt: '[INFO]',          text: 'SVG viewport: click a nerve button to zoom. Dbl-click or ESC to reset.' },
+            { prompt: '[READY]',         text: 'Awaiting nerve selection...' }
+        ];
+
+        bootLines.forEach(function (line) {
+            var el     = document.createElement('div');
+            el.className = 'terminal-line';
+            var prompt = document.createElement('span');
+            prompt.className = 'terminal-prompt';
+            prompt.textContent = line.prompt;
+            var text   = document.createElement('span');
+            text.textContent = line.text;
+            el.appendChild(prompt);
+            el.appendChild(text);
+            terminalBody.insertBefore(el, cursorLine);
+        });
+
+        startTime = Date.now();
+        updateUptime();
+
+        if (footerRef1) footerRef1.textContent = '[System ready \u2014 select a cranial nerve to begin]';
+        if (footerRef2) footerRef2.textContent = '[12 records loaded \u00b7 keys 1\u20139 \u00b7 0 \u00b7 \u2013 \u00b7 = \u00b7 ESC=reset]';
+
+        terminalBody.scrollTop = 0;
+    })();
+
+})();
+</script>
+</body>
+</html>
